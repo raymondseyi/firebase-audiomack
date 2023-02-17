@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <a href="/dashboard.html">Dashboard</a>
+  <input type="text" placeholder="Name of Song" id="nameOfSong">
+  <input type="text" placeholder="Name of Artist" id="nameOfArtist">
+  <input type="text" placeholder="Category" id="songCategory">
+  <label for="">Upload Cover Image
+    <input type="file" accept="image/*" id="myImage">
+  </label>
+  <label for="">Upload Song
+    <input type="file" accept="audio/*" id="mySong">
+  </label>
+  <button id="addSongBtn">Add Song</button>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
+    import {getDatabase,ref,set,onValue} from "https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js";
+    import {getStorage,ref as stRef, uploadBytesResumable} from "https://www.gstatic.com/firebasejs/9.17.1/firebase-storage.js"
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCHzHJMlPMsEfhSk9ZMxUvcM6UD1nx0Y4U",
+      authDomain: "audiomack-70342.firebaseapp.com",
+      projectId: "audiomack-70342",
+      storageBucket: "audiomack-70342.appspot.com",
+      messagingSenderId: "105601638763",
+      appId: "1:105601638763:web:f4cac581919b034b4aac2e",
+      databaseURL: "https://audiomack-70342-default-rtdb.firebaseio.com",
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase();
+    const storage = getStorage()
+    let allSongs = []
+    let userIndex = 0
+    addSongBtn.addEventListener("click",()=>{
+        // Setup  information to save
+       let coverImage = myImage.files[0]
+       let audioFile = mySong.files[0]
+       let song = {
+          title : nameOfSong.value,
+          artist : nameOfArtist.value,
+          category : songCategory.value,
+          coverImageName : coverImage.name,
+          audioName : audioFile.name
+       }
+      console.log(song)
+
+      //Save into the database
+      let dbRef = ref(db,`audiostore/${userIndex}`)
+      set(dbRef,song)
+
+      //Upload the file to firebase storage
+      //  let songRef = stRef(storage,`allsongs`)
+       let imageRef = stRef(storage,`songstore/${coverImage.name}`)
+       let songRef = stRef(storage,`songstore/${audioFile.name}`)
+       uploadBytesResumable(imageRef,coverImage)
+       uploadBytesResumable(songRef,audioFile)
+    })
+
+    onValue(ref(db,"audiostore"),(snapshot)=>{
+      console.log(snapshot.val())
+      allSongs = snapshot.val()
+      if(allSongs){
+        userIndex = allSongs.length
+      }else{
+        userIndex = 0
+      }
+    })
+
+  </script>
+
+</body>
+</html>
